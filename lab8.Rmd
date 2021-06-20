@@ -1,0 +1,241 @@
+
+
+###Packages
+
+Let's begin by loading the packages we'll need to get started
+```{r}
+library(MASS)
+library(ggplot2)
+library(GGally)
+```
+### Linear regression
+
+Linear regression is just a more general form of ANOVA, which itself is a generalized t-test.  In each case, we're assessing if and how the mean of our outcome $y$ varies with other variables.  Unlike t-tests and ANOVA, which are restricted to the case where the factors of interest are all categorical,  regression allows you to also model the effects of continuous variables. 
+
+> **linear regression** is used to model linear relationship between an outcome variable, $y$, and a set of *covariates* or *predictor variables* $x_1, x_2, \ldots, x_p$. 
+
+For our first example we'll look at a small data set in which we're interested in predicting the crime rate per million population based on socio-economic and demographic information at the state level.  
+
+Let's first import the data set and see what we're working with.
+
+```{r}
+# Import data set
+crime <- read.table("http://www.andrew.cmu.edu/user/achoulde/94842/data/crime_simple.txt", sep = "\t", header = TRUE)
+```
+
+**The variable names that this data set comes with are very confusing, and even misleading.**
+
+R: Crime rate: # of offenses reported to police per million population
+
+Age: The number of males of age 14-24 per 1000 population
+
+S: Indicator variable for Southern states (0 = No, 1 = Yes)
+
+Ed: Mean # of years of schooling x 10 for persons of age 25 or older
+
+Ex0: 1960 per capita expenditure on police by state and local government
+
+Ex1: 1959 per capita expenditure on police by state and local government
+
+LF: Labor force participation rate per 1000 civilian urban males age 14-24
+
+M: The number of males per 1000 females
+
+N: State population size in hundred thousands
+
+NW: The number of non-whites per 1000 population
+
+U1: Unemployment rate of urban males per 1000 of age 14-24
+
+U2: Unemployment rate of urban males per 1000 of age 35-39
+
+W: Median value of transferable goods and assets or family income in tens of $
+
+X: The number of families per 1000 earning below 1/2 the median income
+
+**We really need to give these variables better names**
+
+
+```{r}
+# Assign more meaningful variable names
+colnames(crime) <- c("crime.per.million", "young.males", "is.south", "average.ed",
+                     "exp.per.cap.1960", "exp.per.cap.1959", "labour.part",
+                     "male.per.fem", "population", "nonwhite",
+                     "unemp.youth", "unemp.adult", "median.assets", "num.low.salary")
+
+# Convert is.south to a factor
+# Divide average.ed by 10 so that the variable is actually average education
+# Convert median assets to 1000's of dollars instead of 10's
+crime <- transform(crime, is.south = as.factor(is.south),
+                          average.ed = average.ed / 10,
+                          median.assets = median.assets / 100)
+
+# print summary of the data
+summary(crime)
+```
+
+#### First step: some plotting and summary statistics
+
+You can start by feeding everything into a regression, but it's often a better idea to construct some simple plots (e.g., scatterplots and boxplots) and summary statistics to get some sense of how the data behaves.
+
+```{r, fig.align='center', fig.height=4, fig.width=5}
+# Scatter plot of outcome (crime.per.million) against average.ed
+qplot(average.ed, crime.per.million, data = crime)
+# correlation between education and crime
+with(crime, cor(average.ed, crime.per.million))
+```
+
+This seems to suggest that higher levels of average education are associated with higher crime rates.  *Can you come up with an explanation for this phenomenon?*
+
+```{r, fig.align='center', fig.height=4, fig.width=5}
+# Scatter plot of outcome (crime.per.million) against median.assets
+qplot(median.assets, crime.per.million, data = crime)
+# correlation between education and crime
+with(crime, cor(median.assets, crime.per.million))
+```
+
+There also appears to be a positive association between median assets and crime rates.
+
+```{r, fig.align='center', fig.height=5, fig.width=5}
+# Boxplots showing crime rate broken down by southern vs non-southern state
+qplot(is.south, crime.per.million, geom = "boxplot", data = crime)
+```
+
+#### Constructing a regression model
+
+To construct a linear regression model in R, we use the `lm()` function.  You can specify the regression model in various ways.  The simplest is often to use the formula specification.
+
+The first model we fit is a regression of the outcome (`crimes.per.million`) against all the other variables in the data set.  You can either write out all the variable names. or use the shorthand `y ~ .` to specify that you want to include all the variables in your regression.
+
+```{r}
+crime.lm <- lm(crime.per.million ~ ., data = crime)
+# Summary of the linear regression model
+crime.lm
+summary(crime.lm)
+```
+
+Looking at the p-values, it looks like `num.low.salary` (number of families per 1000 earning below 1/2 the median income), `unemp.adult` (Unemployment rate of urban males per 1000 of age 35-39), `average.ed` (Mean # of years of schooling 25 or older), and `young.males` (number of males of age 14-24 per 1000 population) are all statistically significant predictors of crime rate.  
+
+The coefficients for these predictors are all positive, so crime rates are positively associated with wealth inequality, adult unemployment rates, average education levels, and high rates of young males in the population.  
+
+##### Exploring the lm object
+
+What kind of output do we get when we run a linear model (`lm`) in R?
+
+```{r}
+# List all attributes of the linear model
+attributes(crime.lm)
+
+# coefficients
+crime.lm$coef
+```
+
+None of the attributes seem to give you p-values.  Here's what you can do to get a table that allows you to extract p-values. 
+
+```{r}
+# Pull coefficients element from summary(lm) object
+round(summary(crime.lm)$coef, 3)
+```
+
+##### Plotting the lm object
+
+```{r,  fig.align='left'}
+plot(crime.lm)
+```
+
+These four plots are important diagnostic tools in assessing whether the linear model is appropriate.  The first two plots are the most important, but the last two can also help with identifying outliers and non-linearities.  
+
+**Residuals vs. Fitted** When a linear model is appropriate, we expect 
+
+1. the residuals will have constant variance when plotted against fitted values; and 
+
+2. the residuals and fitted values will be uncorrelated.  
+  
+If there are clear trends in the residual plot, or the plot looks like a funnel, these are clear indicators that the given linear model is inappropriate.
+
+**Normal QQ plot** You can use a linear model for prediction even if the underlying normality assumptions don't hold.  However, in order for the p-values to be believable, the residuals from the regression must look approximately normally distributed.  
+
+**Scale-location plot** This is another version of the residuals vs fitted plot.  There should be no discernible trends in this plot.
+
+**Residuals vs Leverage**.  Leverage is a measure of how much an observation influenced the model fit.  It's a one-number summary of how different the model fit would be if the given observation was excluded, compared to the model fit where the observation is included.  Points with *high residual* (poorly described by the model) and *high leverage* (high influence on model fit) are outliers.  They're skewing the model fit away from the rest of the data, and don't really seem to fit with the rest of the data.
+
+> The residual vs fitted and scale-location diagnostic plots for the crime data aren't especially insightful, largely due to the very small sample size.  Below we look at the `diamonds` data to see what a more typical anaylsis of linear model diagnostic plots might reveal.
+
+##### Diagnostic plots for diamonds data.
+
+```{r,eval=FALSE}
+diamonds.lm <- lm(price ~ as.numeric(carat) + as.numeric(cut) + as.numeric(clarity) + as.numeric(color), data = diamonds)
+plot(diamonds.lm)
+
+
+
+```
+
+**Residuals vs. Fitted** 
+
+There is a clear indication of non-linearity present in this plot.  Furthermore, we see that the variance appears to be increasing in fitted value.  
+
+**Normal QQ plot** The residuals appear highly non-normal.  Both the lower tail and upper tail are heavier than we would expect under normality. This may be due to the non-constant variance issue we observed in the Residuals vs. Fitted plot.
+
+**Scale-location plot** We see a clear increasing trend in residual variance that runs through most of the plot.  This is indicated by the upward slope of the red line, which we can interpret as the standard deviation of the residuals at the given level of fitted value.  
+
+**Residuals vs Leverage**.  None of the points appear to be outliers.  
+
+> Here's what happens if we log-transform both the price and carat variables.
+
+```{r,eval=FALSE}
+diamonds.lm2 <- lm(log(price) ~ I(log(carat)) + cut + clarity + color, data = diamonds)
+plot(diamonds.lm2)
+```
+
+While there remains a very slight indication of non-linearity in the Residual vs Fitted plot, the non-constant variance issue appears to have been addressed by the variable transformations.  The Normal QQ plot indicates that the residuals have a heavier tailed distribution, but since we have a very large sample size this should not cause problems for inference.  There do not appear to be any clear outliers in the data.
+
+##### Collinearity and pairs plots
+
+In your regression class you probably learned that **collinearity** can throw off the coefficient estimates.  To diagnose collinearity, we can do a plot matrix.  In base graphics, this can be accomplished via the `pairs` function.
+
+As a demo, let's look at some of the economic indicators in our data set.
+
+```{r, fig.height = 10, fig.width = 10}
+economic.var.names <- c("exp.per.cap.1959", "exp.per.cap.1960", 
+                        "unemp.adult", "unemp.youth", "labour.part", "median.assets")
+pairs(crime[,economic.var.names])
+round(cor(crime[,economic.var.names]), 3)
+```
+
+Since the above-diagonal and below-diagonal plots contain essentially the same information, it's often more useful to display some other values in one of the spaces.  In the example below, we use the panel.cor function from the `pairs()` documentation to add text below the diagonal.
+
+```{r, fig.height = 10, fig.width = 10}
+# Function taken from ?pairs Example section.  
+panel.cor <- function(x, y, digits = 2, prefix = "", cex.cor, ...)
+{
+    usr <- par("usr"); on.exit(par(usr))
+    par(usr = c(0, 1, 0, 1))
+    r <- abs(cor(x, y))
+    txt <- format(c(r, 0.123456789), digits = digits)[1]
+    txt <- paste0(prefix, txt)
+    if(missing(cex.cor)) cex.cor <- 0.8/strwidth(txt)
+    text(0.5, 0.5, txt, cex = pmax(1, cex.cor * r))
+}
+
+# Use panel.cor to display correlations in lower panel.
+pairs(crime[,economic.var.names], lower.panel = panel.cor)
+```
+
+```{r, fig.height = 10, fig.width = 10, cache = TRUE}
+# ggpairs from GGally library
+# Unlike pairs(), ggpairs() works with non-numeric
+# predictors in addition to numeric ones.
+# Consider ggpairs() for your final project
+ggpairs(crime[,c(economic.var.names, "is.south")], axisLabels = "internal")
+```
+
+Looking at the plot, we see that many of the variables are very strongly correlated.  In particular, police expenditures are pretty much identical in 1959 and 1960.  This is an extreme case of collinearity.  Also, unsurprisingly, youth unemployment and adult unemployment are also highly correlated.  
+
+Let's just include the 1960 police expenditure variable, and also drop the youth unemployment variable.  We'll do this using the `update()` function.  Here's what happens.
+
+```{r}
+crime.lm.2 <- update(crime.lm, . ~ . - exp.per.cap.1959 - unemp.youth)
+summary(crime.lm.2)
+crime.lm.summary.2 <- summary(crime.lm.2)
+```

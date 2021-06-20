@@ -1,0 +1,239 @@
+
+###Agenda
+
+- Writing functions in R
+- If-else statements
+
+###Basics of lists
+
+> A list is a **data structure** that can be used to store **different kinds** of data
+
+- Recall: a vector is a data structure for storing *similar kinds of data*
+
+- To better understand the difference, consider the following example.
+
+```{r}
+my.vector.1 <- c("Ela", 22, FALSE) # (name, weight, is.male)
+my.vector.1 
+typeof(my.vector.1)  # All the elements are now character strings!
+```
+
+###Lists vs. vectors
+
+```{r}
+#Info about Lara 
+my.vector.2 <- c(FALSE, TRUE, 1) # (is.male, is.baby, age)
+typeof(my.vector.2)
+```
+
+- Vectors expect elements to be all of the same type (e.g., `Boolean`, `numeric`, `character`)
+
+- When data of different types are put into a vector, the R converts everything to a common type
+
+###Lists
+
+- To store data of different types in the same object, we use lists
+
+- Simple way to build lists: use `list()` function
+
+```{r}
+my.list <- list("Ela", 22, TRUE)
+my.list
+sapply(my.list, typeof)
+```
+
+###Named elements
+```{r}
+kid.1 <- list(name="Ela", weight=22, is.male=FALSE)
+kid.1
+```
+
+###Referencing elements of a list (similar to data frames)
+```{r}
+kid.1$name # Get "name" element (returns a string)
+kid.1[["name"]] # Get "name" element (returns a string)
+kid.1["name"] # Get "name" slice (returns a sub-list)
+c(typeof(kid.1$name), typeof(kid.1["name"]))
+```
+
+###Functions
+- We have used a lot of built-in functions: `mean()`, `subset()`, `plot()`, `read.table()`...
+
+- An important part of programming and data analysis is to write custom functions
+
+- Functions help make code **modular**
+
+- Functions make debugging easier
+
+- Remember: this entire class is about applying *functions* to *data*
+
+###What is a function?
+
+> A function is a machine that turns **input objects** (arguments) into an **output object** (return value) according to a definite rule.
+
+- Let's look at a really simple function
+
+```{r}
+addOne <- function(x) {
+  x + 1
+}
+```
+
+- `x` is the **argument** or **input**
+
+- The function **output** is the input `x` incremented by 1
+
+```{r}
+addOne(12)
+```
+
+###More interesting example
+
+- Here's a function that returns a % given a numerator, denominator, and desired number of decimal values
+
+```{r}
+calculatePercentage <- function(x, y, d) {
+  decimal <- x / y  # Calculate decimal value
+  round(100 * decimal, d)  # Convert to % and round to d digits
+}
+
+calculatePercentage(27, 80, 1)
+```
+
+- If you're calculating several %'s for your report, you should use this kind of function instead of repeatedly copying and pasting code
+
+###Function returning a list
+- Here's a function that takes a person's full name (FirstName LastName), weight in lb and height in inches and converts it into a list with the person's first name, person's last name, weight in kg, height in m, and BMI.
+
+```{r}
+createPatientRecord <- function(full.name, weight, height) {
+  name.list <- strsplit(full.name, split=" ")[[1]]
+  first.name <- name.list[1]
+  last.name <- name.list[2]
+  weight.in.kg <- weight / 2.2
+  height.in.m <- height * 0.0254
+  bmi <- weight.in.kg / (height.in.m ^ 2)
+  list(first.name=first.name, last.name=last.name, weight=weight.in.kg, height=height.in.m,
+       bmi=bmi)
+}
+```
+###Trying out the function
+```{r}
+createPatientRecord("Ahmet CAN", 185, 12 * 6 + 1)
+```
+
+###Another example: 5 number summary
+- Calculate mean, 10% trimmed mean, median, geometric and harmonic means of a random variable 
+
+```{r}
+fiveaverages <- function(x) {
+  c(average=mean(x), trimmed=mean(x, trim=0.10), median=median(x), geometricmean= prod(x)^(1/length(x)), harmonicmean= 1/mean(1/x))
+}
+x <- rnorm(200, mean=20, sd=5) # Vector of 200 kids with weight mean 5 and weight sd 2
+par(mfrow=c(1,3))
+hist(x)
+qqnorm(x)
+qqline(x)
+boxplot(x)
+fiveaverages(x)
+```
+###Add outliers in the dataset
+- Calculate mean, 10% trimmed mean, median, geometric and harmonic means of a random variable 
+
+```{r}
+x <- c(rnorm(180, mean=20, sd=5),rnorm(20, mean=50, sd=5)) # Vector of 200 kids with outliers
+par(mfrow=c(1,3))
+hist(x)
+qqnorm(x)
+qqline(x)
+boxplot(x)
+fiveaverages(x)
+```
+###If-else statements
+
+- Oftentimes we want our code to have different effects depending on the features of the input
+
+- Example: Calculating a student's letter grade
+  - If grade >= 90, assign A
+  - Otherwise, if grade >= 80, assign B
+  - Otherwise, if grade >= 70, assign C
+  - In all other cases, assign F
+
+- To code this up, we use if-else statements
+
+###If-else Example: Letter grades
+```{r}
+calculateLetterGrade <- function(x) {
+  if(x >= 90) {
+    grade <- "A"
+  } else if(x >= 80) {
+    grade <- "B"
+  } else if(x >= 70) {
+    grade <- "C"
+  } else {
+    grade <- "F"
+  }
+  grade
+}
+
+course.grades <- c(92, 78, 87, 91, 62)
+sapply(course.grades, FUN=calculateLetterGrade)
+```
+
+###`return()`
+
+- In the previous examples we specified the output simply by writing the output variable as the last line of the function
+
+- More explicitly, we can use the `return()` function
+
+```{r}
+addOne <- function(x) {
+  return(x + 1)
+}
+
+addOne(12)
+```
+
+- We will generally avoid the `return()` function, but you can use it if necessary or if it makes writing a particular function easier.
+
+###Write your own function for Median Absolute Deviation
+```{r,eval=FALSE}
+MADcalculator <- function(x) {
+
+  ...
+  ...
+  ...
+  
+  
+}
+```
+###Write your own function for correlation analysis
+
+- Example: 
+  - Draw a scatter plot for x and y
+  - Calculate Pearson corelation coefficient
+  - Automatically evaluate if the relationship is strong, weak, etc...
+  
+```{r,eval=FALSE}
+CorrelationAnalyzer <- function(x,y) {
+
+  ...
+  ...
+  ...
+  
+  
+}
+```
+
+###Write your own function for replacing missing values with the 10% trimmed mean 
+
+```{r,eval=FALSE}
+MissingValueReplacer <- function(x,y) {
+
+  ...
+  ...
+  ...
+  
+  
+}
+```

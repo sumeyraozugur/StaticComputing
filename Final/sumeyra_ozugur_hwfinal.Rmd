@@ -1,0 +1,1627 @@
+---
+title: "Project of Statistical Computing"
+author: "Sumeyra Özuğur"
+date: "16.06.2021"
+output: html_document
+---
+
+
+The datasets I chose for Statical Computing: 
+
+* *balik_hal_fiyat (first data)* 
+* *sebze_meyve_hal_fiyatlari (second data)*
+* *sosyal-yardim-yasa-gore for (third data)*
+
+## Fish Market (First Data)
+
+I should check Column names, row names. I should check what is in my data.First of all is downloading the data as csv format
+
+
+```{r}
+data1 <- read.csv("C:\\Users\\asus\\Desktop\\StaticProje\\balik_hal_fiyatlari.csv",sep = ";")
+```
+
+
+
+Our data is consisting of 9551 rows and 6 columns.
+
+
+```{r}
+sapply(data1, typeof)
+
+```
+ The data types  in the dataset are character and int.
+
+```{r}
+sum(is.na(data1))#0 is there na or not
+```
+As you see, this dataset does not contain Na.
+
+
+
+```{r}
+colnames(data1)
+```
+
+### Explanation
+
+1. TARIH: Gives date information,
+2. MAL_TURU: gives the type information of the product
+3. MAL_ADI: gives the name of the product
+4. BIRIM: gives the unit of measure information
+5. ASGARI_UCRET: gives the minimum price for the product
+6. AZAMI_UCRET:gives the max price for the product
+
+
+
+I will rename the columns to have more descriptive names but I did not change the names in my data
+
+
+```{r}
+ colnames(data1) <- c('Date', 'Product_Type','Product_Name','Unit','Min_Price','Max_Price')
+
+```
+
+
+
+
+
+```{r}
+head(data1)
+```
+When we run this code,we see the type of Date  as a character.
+Let's solve this problem.
+
+```{r}
+data1$Date<-as.Date(data1$Date,format = '%d.%m.%Y')
+
+```
+
+
+```{r}
+class(data1$Date)
+```
+
+For better "visualization" and "summary"  I will convert columns with character data type into factor.
+by the way for this operation  I used **stringsAsFactors = TRUE** parametre in other datasets.
+
+
+```{r}
+data1$Product_Type <- as.factor(data1$Product_Type)
+
+
+data1$Product_Name <- as.factor(data1$Product_Name)
+
+data1$Unit <- as.factor(data1$Unit)
+
+
+
+```
+
+
+
+```{r}
+summary(data1)
+```
+As you see, Mean of **Date** column is 2021-03-12 , **Unit** column have 2 type of variable: ADET and KG.
+**Product_Type** column have 4 type of variable: these are Balık,İthal,Kültür,Tatlı Su. Mean of **Min_Price** column is 343 and mean of **Min_Price** column is 343.
+
+### Data Visualization
+
+
+```{r}
+library(ggplot2)
+```
+
+
+
+
+```{r}
+boxplot(data1$Date ~ data1$Product_Type,
+        main="Date Based on Product Type",
+        col = c("grey","purple","steelblue","black"),
+        pch=19,
+        ylab = "Months",
+        xlab = "Product Type",
+        border = "blue")
+```
+
+Max value of KÜLTÜR is higher than others, that value is maybe 20 April. Min value of İTHAL(DONUK) is less than others, that value is maybe 5 February.
+
+
+```{r}
+ggplot(data1, aes(y = Product_Type, col = Unit, fill = Unit)) + 
+  geom_bar() + 
+  labs(title = "Product Type-Unit",
+  y = "Product Type")+
+  facet_wrap(~data1$Unit)
+```
+
+
+In this chart, we see that types of produt are mostly sold as KG.
+only BALIK sold as ADET
+
+
+
+
+```{r}
+
+names <- c("balik","tatli","kültür", "ithal")
+
+
+
+pie(table(data1$Product_Type),
+    main = "Product Type for data1",
+    col = c("red","orange","pink","white"),
+     labels = names,
+    radius = 1.09,
+    
+   
+   )
+```
+
+As you see, This graph shows most of the Product Type colon is balik, the least is tatli.
+
+
+## Confidence Interval
+
+```{r}
+first_date <- subset(data1, Date < "2021-03-12")
+second_date <- subset(data1, Date >= "2021-03-12")
+
+```
+
+
+
+**Level of 0.9:**
+
+```{r}
+cat(paste0("Lower end point: ", t.test(first_date$Min_Price,
+                                conf.level = 0.9)$conf.int[1],
+           "\nUpper end point: ",t.test(first_date$Min_Price,
+                                conf.level = 0.9)$conf.int[2]))
+```
+
+
+
+```{r}
+cat(paste0("Lower end point: ", t.test(second_date$Min_Price,
+                                conf.level = 0.9)$conf.int[1],
+           "\nUpper end point: ",t.test(second_date$Min_Price,
+                                conf.level = 0.9)$conf.int[2]))
+```
+
+
+**Level of 0.95:**
+
+```{r}
+cat(paste0("Lower end point: ", t.test(first_date$Min_Price,
+                                conf.level = 0.95)$conf.int[1],
+           "\nUpper end point: ",t.test(first_date$Min_Price,
+                                conf.level = 0.95)$conf.int[2]))
+```
+
+
+
+```{r}
+cat(paste0("Lower end point: ", t.test(second_date$Min_Price,
+                                conf.level = 0.95)$conf.int[1],
+           "\nUpper end point: ",t.test(second_date$Min_Price,
+                                conf.level = 0.95)$conf.int[2]))
+```
+
+
+
+**Level of 0.99:**
+
+
+```{r}
+cat(paste0("Lower end point: ", t.test(first_date$Min_Price,
+                                conf.level = 0.99)$conf.int[1],
+           "\nUpper end point: ",t.test(first_date$Min_Price,
+                                conf.level = 0.99)$conf.int[2]))
+```
+
+
+
+```{r}
+cat(paste0("Lower end point: ", t.test(second_date$Min_Price,
+                                conf.level = 0.99)$conf.int[1],
+           "\nUpper end point: ",t.test(second_date$Min_Price,
+                                conf.level = 0.99)$conf.int[2]))
+```
+
+
+## Hypothesis Testing
+
+
+* Filter for Product_Type
+
+```{r}
+ithal <- subset(data1, Product_Type=="İTHAL (DONUK)")
+kultur <- subset(data1, Product_Type=="KÜLTÜR")
+balik <- subset(data1, Product_Type == "BALIK")
+tatlisu <- subset(data1, Product_Type == "TATLI SU")
+
+```
+
+
+
+
+* Filter for Unit
+```{r}
+kg <- subset(data1, Unit=="KG")
+adet <-subset(data1, Unit=="ADET")
+
+```
+
+
+
+* Filter for Date
+
+```{r}
+second_date <- subset(data1, Date >= "2021-03-15")
+
+```
+
+
+
+### First Hypothesis
+
+
+
+
+
+Are there significant difference between mean Min_Price of İTHAL(DONUK) and KÜLTÜR?
+
+1) **Normality Check**
+
+
+
+```{r}
+hist(ithal$Min_Price)
+
+```
+
+
+Shape of the distribution is Right-Skewd, I tried converting this to a normal graph but I did not. So I will assume that it is normal.
+
+
+
+
+
+```{r}
+hist(kultur$Min_Price)
+
+```
+
+
+ it is like a normal distribution
+
+
+
+2) **Dependency Check**
+
+I have two independent classes, these(ithal and kultur) are different.
+
+3) **Variance Check**
+
+Ho: muİTHAL = muKULTUR
+
+Ha: muİTHAL != muKULTUR
+
+
+```{r}
+var.test(ithal$Min_Price, kultur$Min_Price)
+```
+
+p<2.2e -16 this means that p value less than 0.05, variances are not homogenious. But I assume that variances are homogenious.
+
+```{r}
+t.test(ithal$Min_Price, kultur$Min_Price,
+       paired = FALSE,
+       conf.level = .95,
+       alternative = "two.sided",
+       var.equal = TRUE)
+```
+
+
+Rejection: p-value is greater than 0.05 and the null hypothesis is not rejected
+
+Result: There is not a major difference between them. Even, mean score of kultur is almost equal to ithal.
+
+
+
+### Second Hypothesis
+
+
+Are there significant difference  mean Max_Price of KG less than 50?
+
+1) **Normality Check**
+
+
+
+
+```{r}
+#Righ Skewed
+hist(kg$Max_Price)
+
+```
+
+
+
+
+```{r}
+#remove bigger 4000 of Max_Price  
+#new_kg<-kg$Max_Price[-which(kg$Max_Price> 4000)]
+#hist(new_kg)
+```
+
+it is not normal, but I will assume that it is normal.
+
+```{r}
+t.test(kg$Max_Price,
+       mu=50,
+       alternative="less",
+       conf.level = 0.95)
+```
+
+
+Rejection: p-value is greater than 0.05 and the null hypothesis is not rejected.
+
+Result: There is no significantly differences mu = 50 of mean Max_Price of KG.
+
+
+
+### Third Hypothesis
+
+
+Are there significant difference mean Max_Price of  second_date bigger than 80?
+
+1) **Normality Check**
+
+
+```{r}
+#Shape of the distribution is Right-Skewd
+hist(second_date$Max_Price)
+
+```
+
+
+```{r}
+
+#Convert to Normal
+second_date_log <-log(second_date$Max_Price)
+hist(second_date_log,
+     main = "Histogram of second_date_log",
+     
+     #breaks = 50,
+     col = "purple")
+```
+
+
+
+
+
+```{r}
+t.test(second_date_log,
+       mu=80,
+       alternative="greater",
+       conf.level = 0.95)
+```
+
+
+Rejection: p-value is greater than 0.05 and the null hypothesis is not rejected.
+
+Result: There is no significantly differences mu = 80 of mean Max_Price of second_date
+
+
+
+## ANOVA
+
+1)Used to compare means of two or more groups
+
+2)Groups should be independent of each other
+
+3)Groups should ensure homogenity of variance
+
+
+
+
+```{r}
+boxplot(data1$Min_Price ~ data1$Product_Type,
+        main="Date Based on Product Type",
+        col = c("grey","purple","steelblue"),
+        pch=19,
+        
+        ylab = "Min_Price",
+        xlab = "Product Type",
+        border = "blue")
+```
+
+
+BALIK has the most outliers,  KÜLTÜR has the least outliers. Max value of BALIK is higher than others,its value about 70.
+
+
+Are there significant differences between mean of Min_Price of Product types?
+
+### Normality Check
+At now, I will check the normality for Product_Type.
+
+
+```{r}
+shapiro.test(ithal$Min_Price)
+```
+
+
+p-value is less than 0.05 and so it is not normal. But I assume that It is normal.
+
+
+```{r}
+shapiro.test(kultur$Min_Price)
+```
+
+p-value  is less than 0.05 and so it is not normal. But I assume that It is normal.
+
+```{r}
+shapiro.test(tatlisu$Min_Price)
+
+```
+p-value  is less than 0.05 and so it is not normal. But I assume that it is normal.
+
+```{r}
+hist(balik$Min_Price)
+
+```
+
+It is not normal. But I assume that it is normal.
+
+
+
+### Variance Homogenity
+
+After that, I will check the variance homogenity,
+
+
+
+Ho: muTATLİSU = muKÜLTÜR = muİTHAL=muBALIK
+
+Ha: At least one of them is different
+
+
+```{r}
+bartlett.test(data = data1,  Min_Price~ Product_Type)
+
+```
+
+
+this **Result** shows that p-value < α = 0.05 So reject the null hypothesis  for variance homogenity  and we assume that variances are equal.
+
+```{r}
+#3) Analysis of variance
+anova_result_data1 <- aov(data=data1, Min_Price~Product_Type)
+anova_result_data1$coefficients
+```
+
+
+By the way,Intercept,Intercept is mean Min_Price of Product_TypeBALIK.
+
+```{r}
+summary(anova_result_data1)
+```
+
+
+In this  result, p-value is less than 0.05. So, the null hypothesis rejects. In other words, at least mean of  one of  Min_Price is different from others.
+
+
+```{r}
+TukeyHSD(anova_result_data1)
+```
+
+
+
+
+## Vegetable Fruit Market(Second Data)
+
+Let's download this data and check.
+By the way I used  again **stringsAsFactors = TRUE** this parametre.
+
+```{r}
+vegetable_fruit<- read.csv("C:\\Users\\asus\\Desktop\\StaticProje\\sebze_meyve_hal_fiyatlari.csv", sep = ";",stringsAsFactors = TRUE)
+
+```
+
+You can also use the str function to examine data.
+
+```{r}
+str(vegetable_fruit)
+
+```
+the types of this dataset are factor and integer.
+
+Our data is consisting of 11123 rows and 6 columns. I should change type of Tarih as Date 
+```{r}
+vegetable_fruit$TARIH<-as.Date(vegetable_fruit$TARIH,format = '%d.%m.%Y')
+
+```
+
+Let's see colnames
+
+```{r}
+colnames(vegetable_fruit)
+```
+### Explanation
+
+1. TARIH: Gives date information,
+2. MAL_TURU: gives the type information of the product
+3. MAL_ADI: gives the name of the product
+4. BIRIM: gives the unit of measure information
+5. ASGARI_UCRET: gives the minimum price for the product
+6. AZAMI_UCRET:gives the max price for the product
+
+
+I will rename the columns to have more descriptive names
+
+
+
+```{r}
+ colnames(vegetable_fruit) <- c('Date', 'Product_Type','Product_Name','Unit','Min_Price','Max_Price')
+
+```
+
+
+
+
+```{r}
+sum(is.na(vegetable_fruit))#0 is there na or not
+```
+There is no Na in the dataset.
+
+
+
+
+
+
+
+
+```{r}
+summary(vegetable_fruit)
+```
+As you see, Mean of **Date** column is 2021-03-15 , **Unit** column have 3 type of variable: ADET,BAĞ and KG.
+By the way there ise "İTHAL.." in **Prodyct_Type** column.
+Lets fix it.
+
+```{r}
+library(dplyr)
+vegetable_fruit <- vegetable_fruit %>% mutate(Product_Type = recode(Product_Type, "İTHAL.." = "İTHAL"))
+```
+
+
+### Data Visualization
+
+
+
+
+```{r}
+library(ggplot2)
+```
+
+
+```{r}
+boxplot(vegetable_fruit$Date ~ vegetable_fruit$Product_Type,
+        main="Date Based on Product Type",
+        col = c("cyan","red","green"),
+        pch=19,
+        border = "blue",
+        ylab = "Months",
+        xlab = "Product Type")
+
+```
+
+As you can see,there are different Product Type and their Months results are almost same.
+
+
+
+
+```{r}
+ggplot(data = vegetable_fruit, aes(x = Min_Price, fill = Product_Type)) +
+  labs(title = "Min Price - Product Type Graph")+
+  geom_density(alpha = .5)
+```
+
+
+Our product type data is concentrated between 0-100 TL. 
+
+İthal type has the highest density around 50TL Minimum Price.
+
+
+```{r}
+hist(vegetable_fruit$Max_Price, main = "Frequencies of Max Price",
+     xlab = "Max Price", ylab = "Frequency", col = "steelblue",
+     border = "steelblue", breaks = 200)
+
+```
+
+
+In this graph, we see that the  column of Max Price  is max 600 and we can say that there is more data between 0-100.
+
+## Confidence Interval
+
+```{r}
+vegetables <- subset(vegetable_fruit, Product_Type=="SEBZE")
+fruits <- subset(vegetable_fruit, Product_Type=="MEYVE")
+imported_products<- subset(vegetable_fruit,Product_Type =="İTHAL")
+
+```
+
+
+**Level of 0.9:**
+
+```{r}
+cat(paste0("Lower end point: ", t.test(vegetables$Min_Price,
+                                conf.level = 0.9)$conf.int[1],
+           "\nUpper end point: ",t.test(vegetables$Min_Price,
+                                conf.level = 0.9)$conf.int[2]))
+```
+
+
+
+```{r}
+cat(paste0("Lower end point: ", t.test(fruits$Min_Price,
+                                conf.level = 0.9)$conf.int[1],
+           "\nUpper end point: ",t.test(fruits$Min_Price,
+                                conf.level = 0.9)$conf.int[2]))
+```
+
+
+```{r}
+cat(paste0("Lower end point: ", t.test(imported_products$Min_Price,
+                                conf.level = 0.9)$conf.int[1],
+           "\nUpper end point: ",t.test(imported_products$Min_Price,
+                                conf.level = 0.9)$conf.int[2]))
+```
+
+
+**Level of 0.95:**
+
+
+```{r}
+cat(paste0("Lower end point: ", t.test(vegetables$Min_Price,
+                                conf.level = 0.95)$conf.int[1],
+           "\nUpper end point: ",t.test(vegetables$Min_Price,
+                                conf.level = 0.95)$conf.int[2]))
+```
+
+```{r}
+cat(paste0("Lower end point: ", t.test(fruits$Min_Price,
+                                conf.level = 0.95)$conf.int[1],
+           "\nUpper end point: ",t.test(fruits$Min_Price,
+                                conf.level = 0.95)$conf.int[2]))
+```
+
+
+```{r}
+cat(paste0("Lower end point: ", t.test(imported_products$Min_Price,
+                                conf.level = 0.95)$conf.int[1],
+           "\nUpper end point: ",t.test(imported_products$Min_Price,
+                                conf.level = 0.95)$conf.int[2]))
+```
+
+
+**Level of 0.99:**
+
+```{r}
+cat(paste0("Lower end point: ", t.test(vegetables$Min_Price,
+                                conf.level = 0.99)$conf.int[1],
+           "\nUpper end point: ",t.test(vegetables$Min_Price,
+                                conf.level = 0.99)$conf.int[2]))
+```
+
+
+```{r}
+cat(paste0("Lower end point: ", t.test(fruits$Min_Price,
+                                conf.level = 0.99)$conf.int[1],
+           "\nUpper end point: ",t.test(fruits$Min_Price,
+                                conf.level = 0.99)$conf.int[2]))
+```
+
+
+```{r}
+cat(paste0("Lower end point: ", t.test(imported_products$Min_Price,
+                                conf.level = 0.99)$conf.int[1],
+           "\nUpper end point: ",t.test(imported_products$Min_Price,
+                                conf.level = 0.99)$conf.int[2]))
+```
+
+
+## Hypothesis Testing
+
+
+* Filter for Product_Type
+I did that before so I will use 
+**vegetables** for SEBZE,
+**fruits** for MEYVE
+
+* Filter for Unit
+```{r}
+kg <- subset(vegetable_fruit, Unit=="KG")
+adet<-subset(vegetable_fruit, Unit=="ADET")
+
+```
+
+
+
+* Filter for Date
+
+```{r}
+first_date <- subset(vegetable_fruit, Date < "2021-03-15 ")
+second_date <- subset(vegetable_fruit, Date >= "2021-03-15")
+
+```
+
+
+
+### First Hypothesis
+
+
+
+
+
+Are there significant difference between mean Min_Price of SEBZE and MEYVE?
+
+1) **Normality Check**
+
+
+If you want to use **shapiro test**, your sample size must be between 3 and 5000. So I will use hist() fonk.
+
+
+
+```{r}
+hist(vegetables$Min_Price)
+
+```
+
+
+Shape of the distribution is Right-Skewd,Let's try converting this to a normal graph.
+
+
+
+```{r}
+vegetables_log <-log2(vegetables$Min_Price)
+hist(vegetables_log,
+     main = "Histogram of vegetables_log",
+     
+     #breaks = 50,
+     col = "orange")
+
+```
+
+Now, it is like normal distribution
+
+
+```{r}
+hist(fruits$Min_Price)
+
+```
+
+Shape of the distribution is Right-Skewd, Let's try converting this to a normal graph.
+
+
+
+
+```{r}
+fruits_log <-log2(fruits$Min_Price)
+hist(fruits_log,
+     main = "Histogram of fruits_log",
+     
+     #breaks = 50,
+     col = "red")
+```
+
+
+Now, it is like normal distribution
+
+
+2) **Dependency Check**
+I have two independent classes, these(vegetables, fruits) are different.
+
+3) **Variance Check**
+Ho: muVEGETABLES = muFRUİTS
+
+Ha: muVEGETABLES != muFRUİTS
+
+
+```{r}
+var.test(vegetables_log, fruits_log)
+```
+
+p<2.2e -16 this means that p value less than 0.05, variances are not homogenious.
+But I assume that variances are homegenious
+
+```{r}
+t.test(vegetables_log, fruits_log,
+       paired = FALSE,
+       conf.level = .95,
+       alternative = "two.sided",
+       var.equal = TRUE)
+```
+
+
+Rejection: p-value is greater than 0.05 and the null hypothesis rejection is not rejected.
+
+Result: The difference between mean Min_Price of fruits and vegetables is not highly significant. Namely, there is not a major difference between them. Even, mean Min_Price of fruits is almost equal to vegetables.
+
+
+
+### Second Hypothesis
+
+
+Are there significant difference between mean Min_Price of KG and ADET?
+
+1) **Normality Check**
+
+
+
+
+```{r}
+#Shape of the distribution is Right-Skewd
+hist(kg$Min_Price)
+
+```
+
+
+```{r}
+#Convert to Normal
+kg_log <-log2(kg$Min_Price)
+hist(kg_log,
+     main = "Histogram of vegetables_log",
+     
+     breaks = 22,
+     col = "cyan")
+```
+
+
+
+```{r}
+hist(adet$Min_Price)
+
+```
+
+I tried converting to normal distribution but I did not so  it is not normal, but I will assume that it is normal.
+
+
+2) **Dependency Check**
+I have two independent classes, these(adet and kg) are different.
+
+3) **Variance Check**
+Ho: muADET = muKG
+
+Ha: muADET != muKG
+
+```{r}
+var.test(kg_log, adet$Min_Price)
+```
+
+p value less than 0.05, variances are not homogenious. But I assume that variances are homegenious.
+
+```{r}
+t.test(kg_log, adet$Min_Price,
+       paired = FALSE,
+       conf.level = .95,
+       alternative = "two.sided",
+       var.equal = TRUE)
+```
+
+
+Rejection: p-value is less than 0.05 and the null hypothesis  is rejected.
+
+Result: The difference between mean Min_Price of adet and kg is highly significant. Namely, there is a major difference.
+
+
+
+### Third Hypothesis
+
+
+Are there significant difference between mean Min_Price of first_date and second_date?
+
+1) **Normality Check**
+
+
+```{r}
+#Shape of the distribution is Right-Skewd
+hist(first_date$Min_Price)
+
+```
+
+
+```{r}
+
+#Convert to Normal
+first_date_log <-log2(first_date$Min_Price)
+hist(first_date_log,
+     main = "Histogram of first_date_log",
+     
+     #breaks = 50,
+     col = "purple")
+```
+
+
+```{r}
+#Shape of the distribution is Right-Skewd
+hist(second_date$Min_Price)
+
+```
+
+
+
+```{r}
+#Convert to Normal Dist
+second_date_log <-log2(second_date$Min_Price)
+hist(second_date_log,
+     main = "Histogram of second_date_log",
+     
+     #breaks = 50,
+     col = "yellow")
+```
+
+
+
+2) **Dependency Check**
+I have two independent classes, these(first_date, second_date) are different.
+
+3) **Variance Check**
+Ho: muFIRST_DATE = muSECOND_DATE
+
+Ha: muFIRST_DATE != muSECOND_DATE
+
+
+```{r}
+var.test(first_date_log, second_date_log)
+```
+
+
+p value less than 0.05, variances are not homogenious. But I assume that variances are homegenious.
+
+
+```{r}
+t.test(first_date_log, second_date_log,
+       paired = FALSE,
+       conf.level = .95,
+       alternative = "two.sided",
+       var.equal = TRUE)
+```
+
+
+Rejection: p-value is less than 0.05 and  the null hypothesis is rejected.
+
+Result: The difference between mean Min_Price of first_date and second_date is highly significant. Namely, there is a major difference.
+
+
+
+## ANOVA
+
+1)Used to compare means of two or more groups
+
+2)Groups should be independent of each other
+
+3)Groups should ensure homogeneity of variance
+
+
+
+
+```{r}
+boxplot(vegetable_fruit$Min_Price ~ vegetable_fruit$Product_Type,
+        main="Date Based on Product Type",
+        col = c("grey","purple","steelblue"),
+        pch=19,
+        
+        ylab = "Min_Price",
+        xlab = "Product Type",
+        border = "blue")
+```
+
+
+MEYVE has the most outliers,  İTHAL has the least outliers. They are almost symmetrically distributed. Max value of İTHAL is higher than others,  Min value of SEBZE is lower then others 
+
+
+Are there significant differences between mean of Min_Price of Product types?
+
+### Normality Check
+At now, I will check the normality for Product_Type.
+
+
+```{r}
+shapiro.test(imported_products$Min_Price)
+```
+
+
+p-value is less than 0.05 and so it is not normal. 
+By the way I checked in Hypothes Test part for SEBZE, MEYVE.  These also not normal. 
+But I assume that They are normal.
+
+
+
+
+### Variance Homogenity
+
+After that, I will check the variance homogenity,
+
+
+
+Ho: muSEBZE = muMEYVE = muİTHAL
+
+Ha: At least one of them is different
+
+
+```{r}
+bartlett.test(data = vegetable_fruit,  Min_Price~ Product_Type)
+
+```
+
+
+this **Result** shows that p-value < α = 0.05 So reject the null hypothesis  for variance homogenity  and we assume that variances are equal.
+
+```{r}
+#3) Analysis of variance
+anova_result <- aov(data=vegetable_fruit, Min_Price~Product_Type)
+anova_result$coefficients
+```
+
+
+By the way,Intercept,Intercept is mean Min_Price of Product_TypeİTHAL.
+
+```{r}
+summary(anova_result)
+```
+
+
+In this  result, p-value is less than 0.05. So, the null hypothesis is rejected. In other words, at least mean of  one of  Min_Price is different from others.
+
+
+```{r}
+TukeyHSD(anova_result)
+```
+
+
+
+
+## Social Assistance By Age (Third Data)
+
+Let's download our data and check.
+By the way I used **stringsAsFactors = TRUE** this parametre. if this dataset has type of character,I want to convert these to factor type .
+
+```{r}
+social_help <- read.csv("C:\\Users\\asus\\Desktop\\StaticProje\\sosyal-yardim-yasa-gore.csv", sep = ";",encoding = "UTF-8",stringsAsFactors = TRUE)
+
+```
+
+
+
+Let's see colnames
+
+```{r}
+colnames(social_help)
+```
+
+
+### Explanation
+
+1. X.U.FEFF.YIL: Gives application information of year ,
+2. AY: Gives application information  of month 
+3. YARDIM_TALEBI: Gives information of help request 
+4. CINSIYET: Gives the  information of gender
+5. YAS_ARALIGI: Gives information of Age range 
+6. BASVURU_ADEDI:Gives total number of applications
+
+
+I will rename the columns to have more descriptive names
+
+
+
+```{r}
+ colnames(social_help) <- c('Year', 'Month','Request_Help','Gender','Age_Range','Total_Application')
+
+
+```
+
+
+
+```{r}
+sum(is.na(social_help))#0 is there na or not
+```
+There is no Na in the dataset.
+
+I changed Month column using the 'plyr' package.
+```{r}
+library(plyr)
+social_help <- transform(social_help,
+                      Month = as.factor(mapvalues(Month,c(1,2,3,4,5,6,7,8,9,10,11,12), c("January", "February","March","April","May","June","July","August","September","October","November","December"))))
+
+```
+
+
+```{r}
+head(social_help)
+
+```
+```{r}
+nrow(social_help)
+```
+```{r}
+ncol(social_help)
+```
+
+
+Our data is consisting of 10757 rows and 6 columns.
+
+
+```{r}
+summary(social_help)
+```
+
+
+As you see, Mean of **Year** column is 2017, **Gender** column have 3 type of variable: BELİRSİZ,ERKEK and KADIN.
+By the way there ise "18 Altı" in **Age_Range** column.
+Lets fix it.
+
+```{r}
+library(dplyr)
+social_help <- social_help %>% mutate(Age_Range = recode(Age_Range, "18 Altı" = "18-"))
+```
+
+
+
+### Data Visualization
+
+
+```{r}
+library(ggplot2)
+```
+
+
+
+```{r}
+boxplot(social_help$Year ~ social_help$Age_Range,
+        main="Years Based on Age Range",
+        #col = c("grey","purple","steelblue","black"),
+        pch=19,
+        ylab = "Years",
+        xlab = "Age Range",
+        border = "blue")
+```
+
+
+Greater than 25-34 Age_Range Ages are almost the same.
+
+
+
+```{r}
+mean(social_help$Total_Application)
+sd(social_help$Total_Application)
+```
+
+
+
+
+
+```{r, warning=FALSE}
+
+ggplot(social_help, aes(x = Month, fill = Month))+
+  geom_bar(aes(y = (..count..)/sum(..count..))) + 
+  labs(title = "Month BarChart", x = "Month", y = "Count")
+```
+
+
+This graph shows,  social help is mostly requested in October,January, November and February.
+
+
+
+```{r}
+ggplot(social_help, aes(Age_Range, fill = Gender)) + 
+  stat_count(position = "identity", colour = "grey") +
+  facet_grid(Gender ~ .) + 
+  ggtitle("Age Range - Gender Bar") +
+  xlab("Age") + 
+  ylab("Count")
+```
+
+
+As you see,The distribution of men and women by age range is almost the same.
+
+## Confidence Interval
+
+```{r}
+# calculating confidence interval for females
+
+
+females <- subset(social_help, Gender=="KADIN")
+
+
+female_t <-t.test(females$Total_Application)$conf.int
+female_t
+
+```
+
+
+```{r}
+# calculating confidence interval for males
+
+males <- subset(social_help, Gender=="ERKEK")
+
+
+male_t <-t.test(males$Total_Application)$conf.int
+male_t
+
+```
+
+
+```{r}
+# calculating confidence interval for others
+
+others <- subset(social_help, Gender=="BELİRSİZ")
+
+
+others_t <-t.test(others$Total_Application)$conf.int
+others_t
+
+```
+
+
+
+
+
+```{r}
+
+female_total = with(social_help, t.test(x = social_help$Total_Application[Gender=="KADIN"]))
+male_total = with(social_help, t.test(x = social_help$Total_Application[Gender=="ERKEK"]))
+other_total=with(social_help, t.test(x = social_help$Total_Application[Gender=="BELİRSİZ"]))
+
+
+
+
+df_total_score2 <- data.frame( Gender="BELİRSİZ",
+                              totalApplication="Total_Application", 
+                              mean=mean(other_total$estimate), 
+                              lower=other_total$conf.int[1], 
+                              upper=other_total$conf.int[2])
+
+df_total_score1 <- data.frame( Gender="KADIN",
+                              totalApplication="Total_Application", 
+                              mean=mean(female_total$estimate), 
+                              lower=female_total$conf.int[1], 
+                              upper=female_total$conf.int[2])
+
+
+
+
+
+df_total_score <- rbind(df_total_score1,df_total_score2, 
+                        data.frame(Gender="ERKEK",
+                                   totalApplication="Total_Application", 
+                                   mean=mean(male_total$estimate), 
+                                   lower=male_total$conf.int[1], 
+                                   upper=male_total$conf.int[2]))
+
+
+ggplot(df_total_score, aes(x=totalApplication, y=mean, fill=Gender)) +
+  geom_bar(position="dodge", stat="identity", width = 0.3) +
+  geom_errorbar(aes(ymin=lower, ymax=upper),
+                width=.1,
+                position=position_dodge(0.3))
+```
+
+
+
+This graph shows that mean of women's total application for help is more than mans. Mean of others's total application for help is less than females and males. 
+
+Widths of confidence intervals: females > males > others. This means  that, females value are more insecure than males.
+
+
+## Hypothesis Testing
+
+
+* Filter for Gender
+
+I did that before.
+
+**females** for KADIN,
+**males** for ERKEK.
+
+* Filter for Request_Help
+```{r}
+request <- subset(social_help, Request_Help =="AKÜ")
+
+```
+
+
+
+
+
+* Filter for Year
+
+```{r}
+first_year <- subset(social_help, Year < "2016 ")
+second_year <- subset(social_help, Year >= "2016")
+
+```
+
+
+
+### First Hypothesis
+
+
+
+
+
+Are there significant difference between mean Total_Aplication of KADIN and ERKEK?
+
+1) **Normality Check**
+
+
+If you want to use **shapiro test**, your sample size must be between 3 and 5000. So I will use to decide hist() fonk.
+
+
+
+```{r}
+hist(females$Total_Application)
+
+```
+
+
+Shape of the distribution is Right-Skewd,
+I tried  converting this to a normal graph but I did not. So I will assume that it is normal.
+
+
+
+```{r}
+hist(males$Total_Application)
+
+```
+
+
+Shape of the distribution is Right-Skewd, I tried  converting this to a normal graph but I did not. So I will assume that it is normal.
+
+
+
+
+2) **Dependency Check**
+
+I have two independent classes, these(males, females) are different.
+
+3) **Variance Check**
+
+Ho: muMALE = muFEMALE
+
+Ha: muMALE != muFEMALE
+
+
+```{r}
+var.test(males$Total_Application, females$Total_Application)
+```
+
+
+p<2.2e -16 this means that p value less than 0.05, variances are not homogenious. But I assume that  variances are homogenious.
+
+```{r}
+t.test(males$Total_Application, females$Total_Application,
+       paired = FALSE,
+       conf.level = .95,
+       alternative = "two.sided",
+       var.equal = TRUE)
+```
+
+
+Rejection: p-value is less than 0.05 and the null hypothesis reject.
+
+
+Result: The difference between mean Total_Application of male and female is not highly significant. Even, mean Total_Application of male is almost equal to female.
+
+
+
+### Second Hypothesis
+
+
+Are there significant differences average Totat_Score greater than 80 of Request_Help == AKÜ?
+
+1) **Normality Check**
+
+
+```{r}
+#
+hist(request$Total_Application)
+
+```
+
+
+It is not normal So I will assume that it is normal
+
+
+```{r}
+t.test(request$Total_Application,
+       mu=80,
+       alternative="greater",
+       conf.level = 0.95)
+```
+
+
+Rejection: p-value is greater than 0.05 and the null hypothesis rejection is not rejected.
+
+
+Result: There is no significantly differences mu = 80 of mean Total_Application of Request_Help =="AKÜ"
+
+
+
+### Third Hypothesis
+
+
+Are there significant difference between mean Total_Application of first_year and second_year?
+
+1) **Normality Check**
+
+
+```{r}
+#
+hist(first_year$Total_Application)
+
+```
+
+
+it is not normal, but I will assume that it is normal.
+
+
+
+
+
+```{r}
+#
+hist(second_year$Total_Application)
+
+```
+
+
+it is not normal, but I will assume that it is normal.
+
+
+
+2) **Dependency Check**
+I have two independent classes, these(first_year, second_year) are different.
+
+3) **Variance Check**
+
+
+Ho: muFIRST_YEAR = muSECOND_YEAR
+
+Ha: muFIRST_YEAR != muSECOND_YEAR
+
+
+```{r}
+var.test(first_year$Total_Application, second_year$Total_Application)
+```
+
+
+p value less than 0.05, variances are not homogenious.But I assume that variances are homegenious.
+
+
+```{r}
+t.test(first_year$Total_Application, second_year$Total_Application,
+       paired = FALSE,
+       conf.level = .95,
+       alternative = "two.sided",
+       var.equal = TRUE)
+```
+
+
+Rejection: p-value is less than 0.05 and the null hypothesis rejected.
+
+Result: The difference between mean Total_Application of first_year and second_year is  highly significant. Namely, there is  a major difference
+
+
+
+## ANOVA
+
+1)Used to compare means of two or more groups
+
+2)Groups should be independent of each other
+3)Groups should ensure homogeneity of variance
+
+
+
+
+```{r}
+boxplot(social_help$Total_Application ~ social_help$Gender,
+        main="Total Application Based on Gender",
+        col = c("grey","purple","steelblue"),
+        pch=19,
+        
+        ylab = "Total Application",
+        xlab = "Gender",
+        border = "black")
+```
+
+
+KADIN has the most outliers,   BELİRSİZ has at least outliers. They are almost symmetrically distributed.
+
+
+Are there significant differences between mean of Total Application of Gender?
+
+### Normality Check
+At now, I will check the normality for Product_Type.
+
+
+```{r}
+shapiro.test(others$Total_Application)
+```
+
+
+p-value is less than 0.05 and so it is not normal. 
+By the way I checked before in Hypothes Test part for KADIN, ERKEK.  These are also not normal. 
+But I assume that They are normal.
+
+
+
+
+### Variance Homogenity
+
+After that, I will check the variance homogenity,
+
+
+
+Ho: muKADIN = muERKEK = muBELİRSİZ
+
+Ha: At least one of them is different
+
+
+```{r}
+bartlett.test(data = social_help,  Total_Application~ Gender)
+
+```
+
+
+this **Result** shows that p-value < α = 0.05 So reject the null hypothesis  for variance homogenity  and we assume that variances are equal.
+
+```{r}
+#3) Analysis of variance
+anova_result <- aov(data=social_help, Total_Application~Gender)
+anova_result$coefficients
+```
+
+
+By the way,Intercept,Intercept is mean Total_Application of GenderBELİRSİZ. Mean of Total application for females is greater than others
+
+```{r}
+summary(anova_result)
+```
+
+
+In this  result, p-value is less than 0.05. So, the null hypothesis rejects. In other words, at least mean of  one of  Total Application is different from others.
+
+
+```{r}
+TukeyHSD(anova_result)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,409 @@
+
+
+
+###Agenda
+
+- Summaries with the aggregate() function
+- Standard graphics
+
+###Getting started: birthwt data set-Risk Factors Associated with Low Infant Birth Weight
+- We're going to start by operating on the `birthwt` dataset from the MASS library
+
+- Description: The birthwt data frame has 189 rows and 10 columns. The data were collected at Baystate Medical Center, Springfield, Mass during 1986.
+
+- Usage: birthwt
+
+- Format: This data frame contains the following columns:
+
+  low: indicator of birth weight less than 2.5 kg.
+
+  age: mother's age in years.
+
+  lwt: mother's weight in pounds at last menstrual period.
+
+  race: mother's race (1 = white, 2 = black, 3 = other).
+
+  smoke: smoking status during pregnancy.
+
+  ptl: number of previous premature labours.
+
+  ht: history of hypertension.
+
+  ui: presence of uterine irritability.
+
+  ftv: number of physician visits during the first trimester.
+
+  bwt: birth weight in grams.
+
+```{r}
+library(MASS)
+str(birthwt)
+```
+###Renaming the variables
+- The dataset doesn't come with very descriptive variable names
+
+- Better names can be used for better understanding
+
+```{r}
+colnames(birthwt) 
+
+# The default names are not very descriptive
+
+colnames(birthwt) <- c("birthwt.below.2500", "mother.age", "mother.weight", 
+    "race", "mother.smokes", "previous.prem.labor", "hypertension", "uterine.irr", 
+    "physician.visits", "birthwt.grams")
+
+# Better names!
+```
+
+###Renaming the factors
+
+- All the factors are currently represented as integers
+
+- Let's use the `transform()` and `mapvalues()` functions to convert variables to factors and give the factors more meaningful levels 
+```{r}
+library(plyr)
+birthwt <- transform(birthwt, 
+            race = as.factor(mapvalues(race, c(1, 2, 3), 
+                              c("white","black", "other"))),
+            mother.smokes = as.factor(mapvalues(mother.smokes, 
+                              c(0,1), c("no", "yes"))),
+            hypertension = as.factor(mapvalues(hypertension, 
+                              c(0,1), c("no", "yes"))),
+            uterine.irr = as.factor(mapvalues(uterine.irr, 
+                              c(0,1), c("no", "yes"))),
+            birthwt.below.2500 = as.factor(mapvalues(birthwt.below.2500,
+                              c(0,1), c("no", "yes")))
+            )
+```
+
+###Summary of the data
+- Now that things are coded correctly, we can look at an overall summary
+
+```{r}
+summary(birthwt)
+mean(birthwt$birthwt.grams)
+# Calculate mean for smokers and nonsmokers
+sd(birthwt$birthwt.grams)
+# Calculate standard deviation for smokers and nonsmokers
+fivenum(birthwt$birthwt.grams)
+# Calculate five number summary for smokers and nonsmokers
+```
+
+###A simple table
+- Let's use the `tapply()` function to see what the average birthweight looks like when broken down by race and smoking status
+
+```{r}
+with(birthwt, tapply(birthwt.grams, INDEX = list(race, mother.smokes), FUN = mean)) 
+with(birthwt, tapply(birthwt.grams, INDEX = list(race, mother.smokes), FUN = sd)) 
+with(birthwt, tapply(birthwt.grams, INDEX = list(race, mother.smokes), FUN = median)) 
+with(birthwt, tapply(birthwt.grams, INDEX = list(race, mother.smokes), FUN = IQR)) 
+```
+
+###aggregate() function
+- Let's first recall what `tapply()` does
+
+- Command: `tapply(X, INDEX, FUN)` 
+    - Applies `FUN` to `X` grouped by factors in `INDEX`
+  
+- **`aggregate()`** performs a similar operation, but presents the results in a form that is at times more convenient
+
+- There are many ways to call the `aggregate()` function
+
+- Analog of `tapply` call: `aggregate(X, by, FUN)` 
+    - Here, `by` is exactly like `INDEX`
+    
+###Example: tapply vs aggregate
+```{r}
+library(MASS)
+with(birthwt, tapply(birthwt.grams, INDEX = list(race, mother.smokes), FUN = mean)) # tapply
+with(birthwt, aggregate(birthwt.grams, by = list(race, mother.smokes), FUN = mean)) # aggregate
+# What the average birthweight looks like when broken down by race and hypertention?
+```
+
+###Example: different syntax
+- Here's a convenient alternative way to call `aggregate`
+
+- It uses the R `formula` syntax, which we'll learn more about when we discuss regression
+
+```{r}
+aggregate(birthwt.grams ~ race + mother.smokes, FUN=mean, data=birthwt)
+```
+
+###A closer look at low birth weight 
+
+```{r}
+table(birthwt$race,birthwt$mother.smokes)
+weight.smoke.tbl <- with(birthwt, table(birthwt.below.2500, mother.smokes))
+weight.smoke.tbl
+# Create the first crosstab using with() function
+```
+
+- Is the mother's age correlated with birth weight?
+
+```{r}
+par(mfrow = c(2,2))
+plot(birthwt$birthwt.grams)
+plot(birthwt$birthwt.grams,birthwt$mother.age)
+plot(birthwt$birthwt.grams,birthwt$mother.weight)
+cor(birthwt$birthwt.grams,birthwt$mother.weight)
+cor(birthwt$birthwt.grams,birthwt$mother.age)  # Calculate correlation
+# Calculate the correlation coefficient between birthweight and mother's age using with() function
+```
+
+- Does this change when we account for smoking status?
+
+```{r}
+par(mfrow = c(1,1))
+plot(birthwt$birthwt.grams[birthwt$mother.smokes == "yes"], birthwt$mother.age[birthwt$mother.smokes == "yes"])
+# Create previous plot using with() function
+# Calculate the correlation coefficient for the previous plot using with() function
+# Compute the summary statistics and correlation for nonsmokers and create a plot for it. 
+```
+
+###Faster way: by() function
+- Think of the `by(data, INDICES, FUN)` function as a `tapply()` function that operates on data frames instead of just vectors
+
+- When using `tapply(X, INDEX, FUN)`, `X` is generally a numeric vector
+
+- To calculate correlations, we need to allow `X` to be a data frame or matrix
+
+```{r}
+by(data = birthwt, 
+   INDICES = birthwt[,"mother.smokes"], 
+   FUN = summary)
+by(data = birthwt$birthwt.below.2500, 
+   INDICES = birthwt["mother.smokes"], 
+   FUN = summary)
+by(data = birthwt$mother.weight, 
+   INDICES = birthwt["mother.smokes"], 
+   FUN = mean)
+```
+
+
+
+###Standard graphics in R
+
+#### Single-variable plots
+
+Let's continue with the `birthwt` data from the `MASS` library.
+
+Here are some basic single-variable plots.
+
+```{r, fig.height = 7, fig.align='center'}
+par(mfrow = c(2,4)) # Display plots in a single 2 x 2 figure 
+plot(birthwt$mother.age)
+with(birthwt, hist(mother.age))
+with(birthwt, boxplot(mother.age))
+plot(birthwt$mother.smokes)
+plot(birthwt$birthwt.grams)
+plot(birthwt$birthwt.grams,birthwt$mother.weight)
+qqnorm(birthwt$birthwt.grams)
+qqline(birthwt$birthwt.grams)
+qqnorm(birthwt$mother.weight)
+qqline(birthwt$mother.weight)
+```
+
+Note that the result of calling `plot(x, ...)` varies depending on what `x` is.  
+    - When `x` is *numeric*, you get a plot showing the value of `x` at every index.  
+    - When `x` is a *factor*, you get a bar plot of counts for every level
+
+
+Let's add more information to the smoking bar plot, and also change the color by setting the `col` option.
+
+```{r, fig.height=5, fig.width=5, fig.align='center'}
+par(mfrow = c(1,1))
+plot(birthwt$mother.smokes, 
+     main = "Mothers Who Smoked In Pregnancy", 
+     xlab = "Smoking during pregnancy", 
+     ylab = "Count of Mothers",
+     col = "lightgrey")
+boxplot(birthwt$birthwt.grams~birthwt$hypertension)
+# Create a boxplot for birthweights conditioned on smoking
+# Create a boxplot for birthweights conditioned on physician visits
+```
+
+### (much) better graphics with ggplot2
+
+#### Introduction to ggplot2
+
+ggplot2 has a slightly steeper learning curve than the base graphics functions, but it also generally produces far better and more easily customizable graphics.  
+
+There are two basic calls in ggplot: 
+
+- `qplot(x, y, ..., data)`: a "quick-plot" routine, which essentially replaces the base `plot()`
+- `ggplot(data, aes(x, y, ...), ...)`: defines a graphics object from which plots can be generated, along with *aesthetic mappings* that specify how variables are mapped to visual properties.  
+
+```{r}
+library(ggplot2)
+```
+
+#### plot vs qplot
+
+Here's how the default scatterplots look in ggplot compared to the base graphics.  We'll illustrate things by continuing to use the birthwt data from the `MASS` library.
+
+```{r, fig.align='center', fig.height=3, fig.width=4 , fig.align='center'}
+with(birthwt, plot(mother.age, birthwt.grams))  # Base graphics 
+qplot(x=mother.age, y=birthwt.grams, data=birthwt)  # using qplot from ggplot2
+```
+
+Remember how it took us some effort last time to add color coding, use different plotting characters, and add a legend?  Here's the `qplot` call that does it all in one simple line.
+
+```{r, fig.align='center', fig.height=4, fig.width=5, fig.align='center'}
+qplot(x=mother.age, y=birthwt.grams, data=birthwt,
+      color = mother.smokes,
+      shape = mother.smokes,
+      xlab = "Mother's age (years)",
+      ylab = "Baby's birthweight (grams)"
+      ) 
+```
+
+This way you won't run into problems of accidentally producing the wrong legend.  The legend is produced based on the `colour` and `shape` argument that you pass in.  (Note: `color` and `colour` have the same effect.  )
+
+#### ggplot function
+
+```{r fig.width=10, fig.height=4, dpi=70, cache=TRUE, fig.align='center'}
+ggplot(data=birthwt, aes(x=birthwt.grams, y=mother.age))
+birthwt.plot <- ggplot(data=birthwt, aes(x=birthwt.grams, y=mother.age))
+birthwt.plot + geom_point()
+```
+
+Let's take a step back and try to understand the ggplot syntax.  
+
+1) The first thing we did was to define a graphics object, `birthwt.plot`.  This definition told R that we're using the `birthwt` data, and that we want to display `carat` on the x-axis, and `price` on the y-axis.  
+
+2) We then called `birthwt.plot + geom_point()` to get a scatterplot.
+
+The arguments passed to `aes()` are called **mappings**.  Mappings specify what variables are used for what purpose.  When you use `geom_point()` in the second line, it pulls `x`, `y`, `colour`, `size`, etc., from the **mappings** specified in the `ggplot()` command.  
+
+You can also specify some arguments to `geom_point` directly if you want to specify them for each plot separately instead of pre-specifying a default.
+
+Here we shrink the points to a smaller size, and use the `alpha` argument to make the points transparent.
+
+```{r fig.width=10, fig.height=4, dpi=70, cache=TRUE, fig.align='center'}
+birthwt.plot + geom_point(size = 0.7, alpha = 0.3)
+```
+
+If we wanted to let point color depend on the color indicator of the diamond, we could do so in the following way.
+
+```{r fig.width=10, fig.height=6, dpi=70, cache=TRUE, fig.align='center'}
+birthwt.plot <- ggplot(data=birthwt, aes(x=birthwt.grams, y=mother.age, colour = mother.smokes))
+birthwt.plot + geom_point()
+```
+
+We can change colors by specifying a different color palette.  Here's how we can switch to the `cbPalette` we saw last class.
+
+```{r fig.width=10, fig.height=6, dpi=70, cache=TRUE, fig.align='center'}
+cPalette <- c("#999999", "navyblue")
+birthwt.plot <- ggplot(data=birthwt, aes(x=birthwt.grams, y=mother.age, colour = mother.smokes))
+birthwt.plot + geom_point() + scale_colour_manual(values=cPalette)
+```
+
+To make the scatterplot look more typical, we can sometimes switch to logarithmic coordinate axis spacing.
+
+```{r, eval = FALSE}
+birthwt.plot + geom_point() +
+  coord_trans(x = "log10", y = "log10")
+```
+
+#### Conditional plots
+
+We can create plots showing the relationship between variables across different values of a factor.  For instance, here's a scatterplot showing how birth weight varies with hypertension, conditioned on color.  It's created using the `facet_wrap(~ factor1 + factor2 + ... + factorn)` command.
+
+```{r, fig.width=12, fig.height=6, dpi=70, cache=TRUE}
+birthwt.plot <- ggplot(data=birthwt, aes(x=birthwt.grams, y=mother.age))
+birthwt.plot + geom_point() + facet_wrap(~ mother.smokes)
+
+birthwt.plot <- ggplot(data=birthwt, aes(x=birthwt.grams, y=mother.age, colour = mother.smokes))
+birthwt.plot + geom_point() + facet_wrap(~ hypertension)
+```
+
+`ggplot` can create a lot of different kinds of plots, just like lattice.  Here are some examples.
+
+Function | Description
+---------------------|------------------------------------------------
+`geom_point(...)` | Points, i.e., scatterplot
+`geom_bar(...)` | Bar chart
+`geom_line(...)` | Line chart
+`geom_boxplot(...)` | Boxplot
+`geom_violin(...)` | Violin plot
+`geom_density(...)` | Density plot with one variable
+`geom_density2d(...)` | Density plot with two variables
+`geom_histogram(...)` | Histogram
+
+#### A bar chart
+
+```{r}
+qplot(x = race, data = birthwt, geom = "bar")
+```
+
+#### Histograms and density plots
+
+```{r, fig.width=12, fig.height=6, dpi=70, cache=TRUE, eval=FALSE}
+base.plot <- ggplot(birthwt, aes(x = mother.age)) +
+  xlab("Mother's age") 
+base.plot + geom_histogram()
+base.plot + geom_histogram(aes(fill = race), alpha = 0.5)
+
+base.plot <- ggplot(birthwt, aes(x = mother.age)) +
+  xlab("Mother's age") 
+base.plot + geom_density()
+base.plot + geom_density(aes(fill = race), alpha = 0.5)
+
+```
+
+#### Box plots and violin plots
+
+```{r}
+base.plot <- ggplot(birthwt, aes(x = as.factor(physician.visits), y = birthwt.grams)) +
+  xlab("Number of first trimester physician visits") +
+  ylab("Baby's birthweight (grams)")
+# Violin plot
+base.plot + geom_violin()
+```
+
+#### Visualizing means
+
+Previously we calculated the following table:
+```{r}
+bwt.summary <- aggregate(birthwt.grams ~ race + mother.smokes, data = birthwt, FUN = mean) # aggregate
+bwt.summary
+```
+
+We can plot this table in a nice bar chart as follows:
+
+```{r, fig.height=5, fig.width=5, fig.align='center', eval=TRUE}
+# Define basic aesthetic parameters
+p.bwt <- ggplot(data = bwt.summary, aes(y = birthwt.grams, x = race, fill = mother.smokes))
+
+# Pick colors for the bars
+bwt.colors <- c("#009E73", "#999999")
+
+# Display barchart
+p.bwt + geom_bar(stat = "identity", position = "dodge") +
+  ylab("Average birthweight") + 
+  xlab("Mother's race") +
+  guides(fill = guide_legend(title = "Mother's smoking status")) + 
+  scale_fill_manual(values=bwt.colors)
+```
+
+#### Does the association between birthweight and mother's age depend on smoking status?
+
+We previously ran the following command to calculate the correlation between mother's ages and baby birthweights.
+
+```{r}
+by(data = birthwt[c("birthwt.grams", "mother.age")], 
+   INDICES = birthwt["mother.smokes"], 
+   FUN = function(x) {cor(x[,1], x[,2])})
+```
+
+Here's a visualization of our data that allows us to see what's going on.
+
+```{r, fig.height=5, fig.width=6, fig.align='center', eval=TRUE}
+ggplot(birthwt, aes(x=mother.age, y=birthwt.grams, shape=mother.smokes, color=mother.smokes)) + 
+  geom_point() + # Adds points (scatterplot)
+  geom_smooth(method = "lm") + # Adds regression lines
+  ylab("Birth Weight (grams)") + # Changes y-axis label
+  xlab("Mother's Age (years)") + # Changes x-axis label
+  ggtitle("Birth Weight by Mother's Age") # Changes plot title
+```
